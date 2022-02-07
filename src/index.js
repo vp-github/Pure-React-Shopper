@@ -1,17 +1,63 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React, {useState} from 'react'
+import ReactDOM from 'react-dom'
+import Nav from './Nav'
+import './App.css'
+import ItemPage from './ItemPage';
+import { items } from './static-data';
+import CartPage from './CartPage';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+const App = () => {
+  const [activeTab, setActiveTab] = useState('items');
+  const [cart, setCart] = useState([]);
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+  //Add to Cart
+  const addToCart = (item) => {
+    cart.push(item);
+    setCart(cart)
+    // setCart((prevCart) => [...prevCart, item])
+  }
+
+  //Remove From Cart
+  const removeItem = (item) => {
+    let index = cart.findIndex((i) => i.id===item.id)
+    if(index >=0 ){
+      setCart((cart) => {
+        const copy = [...cart]
+        copy.splice(index, 1)
+        return copy
+      })
+    }
+  }
+
+  return (
+    <div className="App">
+      <Nav activeTab={activeTab} onTabChange={setActiveTab}/>
+      <main className="App-content">
+        <Content tab={activeTab} onAddToCart={addToCart} onRemoveItem={removeItem} cart={summarizeCart(cart)}/>
+        {/* <div>{cart.length} items</div> */}
+      </main>
+    </div>
+  )
+}
+
+const Content = ({tab, onAddToCart, onRemoveItem, cart}) => {
+  switch(tab){
+    default:
+    case 'items': return <ItemPage items={items} onAddToCart={onAddToCart}/>
+    case 'cart' : return <CartPage items={cart} onAddOne={onAddToCart} onRemoveOne={onRemoveItem}/>
+  }
+}
+
+const summarizeCart = (cart) => {
+  const groupedItems = cart.reduce((summary, item) => {
+    summary[item.id] = summary[item.id] || {
+      ...item, 
+      count: 0,
+    }
+    summary[item.id].count++
+    return summary
+  }, {})
+  return Object.values(groupedItems)
+}
+
+ReactDOM.render(<App />, document.querySelector('#root'))
